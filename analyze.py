@@ -117,6 +117,13 @@ def print_table(summary: dict) -> None:
             print(f"  {hops:>3} | {pct(r['direct_acc'])}% | {pct(r['cot_acc'])}%       |"
                   f" {pct(r['advantage'])} pts ({pct(lo)} to {pct(hi)}) |"
                   f" {r['fixed']:>4}/{r['broke']:<4}  | {r['unparsed']['direct']}/{r['unparsed']['cot']}")
+        for hops, r in s["by_hops"].items():
+            for mode in ("direct", "cot"):
+                cut, unread = r["hit_token_limit"][mode], r["unparsed"][mode]
+                if cut or unread > 0.1 * r["n"]:
+                    name = "direct" if mode == "direct" else "step by step"
+                    print(f"  WARNING: {hops} hops, {name}: {cut} answers hit the token limit, "
+                          f"{unread} unreadable. Do not trust this cell.")
         g = s["growth"]
         if g:
             verdict = "real" if g["real"] else "not distinguishable from zero"

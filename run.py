@@ -47,7 +47,7 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--limit", type=int, default=None, help="questions per hop count (for a pilot)")
     ap.add_argument("--batch-size", type=int, default=16)
-    ap.add_argument("--max-new-tokens", type=int, default=256, help="same limit for both modes")
+    ap.add_argument("--max-new-tokens", type=int, default=1024, help="same limit for both modes")
     ap.add_argument("--dtype", default="float16", help="float16 on a T4; bfloat16 on newer GPUs")
     args = ap.parse_args()
 
@@ -88,7 +88,7 @@ def main() -> None:
                 rec = {
                     "model": args.model, "layers": cfg.num_hidden_layers, "width": cfg.hidden_size,
                     "mode": mode, "id": it["id"], "hops": it["hops"], "answer": it["answer"],
-                    "output": text, "n_tokens": int(len(ids)),
+                    "output": text, "n_tokens": int(len(ids)), "max_new_tokens": args.max_new_tokens,
                     "hit_limit": int(len(ids)) >= args.max_new_tokens,
                     **grade(text, it["answer"]),
                 }

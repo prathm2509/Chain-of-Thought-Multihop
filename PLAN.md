@@ -27,7 +27,7 @@ Every question is asked twice, using each model's chat format:
 - **Direct:** reply with only `Answer: <name>`.
 - **Step by step:** write each fact used, one per line, then `Answer: <name>`.
 
-Same limit for both (256 new tokens). Greedy decoding: the most likely next token, every time.
+Same limit for both (originally 256 new tokens, raised to 1,024; see "Changes after seeing results"). Greedy decoding: the most likely next token, every time.
 
 ## Grading
 
@@ -43,6 +43,8 @@ Exact match of the name on the last `Answer:` line. Answers with no readable `An
 ## Changes after seeing results
 
 - **2026-11-19, grader version 2.** In the 1.5B run, direct mode sometimes replied with just the name ("Ronon") instead of "Answer: Ronon". Version 1 counted those as unreadable, so wrong, which lowered direct accuracy and inflated the advantage. Version 2 also accepts a last line consisting of a single name. It does not look at the correct answer while reading. Both versions are reported (`python analyze.py ... --grader 1`).
+
+- **2026-11-19, token limit 256 → 1,024.** The 3B answered the step-by-step instruction ("write down each fact you use") by copying out all 24 facts, so 1,036 of its 1,200 step-by-step answers were cut off at 256 tokens before reaching an answer. The limit is raised to 1,024 for every condition and the 3B is rerun. The prompt is unchanged. Greedy decoding gives identical output for any answer that finished under 256 tokens, so 1.5B answers that never hit the old limit are unaffected. `analyze.py` now warns whenever answers hit the limit or more than 10% are unreadable.
 
 ## Order
 
