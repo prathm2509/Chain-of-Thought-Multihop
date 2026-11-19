@@ -40,6 +40,10 @@ Exact match of the name on the last `Answer:` line. Answers with no readable `An
 - **Does it grow?** The difference between the 4-hop and the 1-hop advantage. Counted as real only if its 95% interval excludes 0.
 - **Backup check:** share of direct's mistakes that step by step fixed, to guard against floor and ceiling effects.
 
+## Changes after seeing results
+
+- **2026-11-19, grader version 2.** In the 1.5B run, direct mode sometimes replied with just the name ("Ronon") instead of "Answer: Ronon". Version 1 counted those as unreadable, so wrong, which lowered direct accuracy and inflated the advantage. Version 2 also accepts a last line consisting of a single name. It does not look at the correct answer while reading. Both versions are reported (`python analyze.py ... --grader 1`).
+
 ## Order
 
 1. Pilot: 5 questions per hop count on the 1.5B (checks timing and that answers parse).

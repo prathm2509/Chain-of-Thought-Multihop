@@ -68,6 +68,15 @@ class TestGrading(unittest.TestCase):
         self.assertEqual(extract_answer("Answer: **Tuma**"), "Tuma")
         self.assertEqual(grade("I think it is Tuma.", "Tuma"), {"pred": None, "parsed": False, "correct": False})
 
+    def test_lone_name_reply(self):
+        # Version 2 accepts a bare name; version 1 did not.
+        self.assertEqual(extract_answer("Ronon"), "Ronon")
+        self.assertEqual(extract_answer("**Ronon.**"), "Ronon")
+        self.assertIsNone(extract_answer("Ronon", version=1))
+        # A sentence is not a lone name, and an Answer: line still wins.
+        self.assertIsNone(extract_answer("I think it is Ronon"))
+        self.assertEqual(extract_answer("Answer: Tuma\nRonon"), "Tuma")
+
     def test_prompt_contains_facts_and_question(self):
         it = self.items_one = make_item(random.Random(1), 2, 0)
         p = build_prompt(it, "direct")
@@ -81,8 +90,8 @@ class TestAnalysis(unittest.TestCase):
         data = {"m": {}}
         # 1 hop: both modes always right. 3 hops: direct always wrong, step by step right.
         for hops, d, c in [(1, True, True), (3, False, True)]:
-            data["m"][hops] = {f"q{i}": {"direct": {"mode": "direct", "correct": d, "parsed": True, "hit_limit": False, "n_tokens": 3},
-                                         "cot": {"mode": "cot", "correct": c, "parsed": True, "hit_limit": False, "n_tokens": 50}}
+            data["m"][hops] = {f"q{i}": {"direct": {"mode": "direct", "correct": d, "parsed": True, "hit_limit": False, "n_tokens": 3, "output": "", "answer": ""},
+                                         "cot": {"mode": "cot", "correct": c, "parsed": True, "hit_limit": False, "n_tokens": 50, "output": "", "answer": ""}}
                                for i in range(20)}
         s = summarize(data)["m"]
         self.assertEqual(s["by_hops"][1]["advantage"], 0)

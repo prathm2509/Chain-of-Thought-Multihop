@@ -15,12 +15,15 @@ import json
 import random
 from pathlib import Path
 
+from prompts import GRADER_VERSION, grade
+
 N_BOOT = 5000
 SEED = 0
 
 
-def load(paths: list[str]) -> dict:
-    """{model: {hops: {question id: {mode: record}}}}"""
+def load(paths: list[str], grader: int = GRADER_VERSION) -> dict:
+    """{model: {hops: {question id: {mode: record}}}}, re-graded from the raw
+    output with the chosen grader version (the saved grade is ignored)."""
     data: dict = {}
     for p in paths:
         for line in open(p, encoding="utf-8"):
@@ -28,6 +31,7 @@ def load(paths: list[str]) -> dict:
                 r = json.loads(line)
             except json.JSONDecodeError:
                 continue
+            r.update(grade(r["output"], r["answer"], grader))
             data.setdefault(r["model"], {}).setdefault(r["hops"], {}).setdefault(r["id"], {})[r["mode"]] = r
     return data
 
@@ -124,8 +128,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("results", nargs="+")
     ap.add_argument("--out", default="results/summary.json")
+    ap.add_argument("--grader", type=int, default=GRADER_VERSION,
+                    help="grader version: 1 = 'Answer:' line only, 2 = also a lone name (see prompts.py)")
     args = ap.parse_args()
-    summary = summarize(load(args.results))
+    summary = summarize(load(args.results, args.grader))
+    print(f"Grader version {args.grader}")
     print_table(summary)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(summary, indent=2), encoding="utf-8")
