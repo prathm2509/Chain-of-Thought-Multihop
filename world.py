@@ -19,7 +19,12 @@ import random
 from collections import deque
 from dataclasses import dataclass, field
 
-RELATIONS = ("mother", "father", "spouse")
+FAMILY = ("mother", "father", "spouse")
+# "Sideways" links connect people across families. They are one-directional
+# (Ravo's boss is Gumal says nothing about Gumal's boss) and have no hidden
+# algebra like "mother's spouse = father", so long chains can wander anywhere.
+SIDEWAYS = ("boss", "mentor", "doctor")
+RELATIONS = FAMILY + SIDEWAYS
 
 ONSETS = "b d f g k l m n p r s t v z br dr gr kr pl st tr".split()
 VOWELS = "a e i o u".split()
@@ -34,6 +39,9 @@ class Person:
     mother: str | None = None
     father: str | None = None
     spouse: str | None = None
+    boss: str | None = None
+    mentor: str | None = None
+    doctor: str | None = None
 
 
 @dataclass
@@ -53,12 +61,28 @@ class World:
         ]
 
 
+# Real English words the syllable pattern can produce. A name like "Some" or
+# "Kite" would read as a word in the prompt ("Some's doctor is ..."), so skip them.
+REAL_WORDS = set("""
+base bale bane bare bile bite bode bole bone bore bose brine broke dale dame dane
+date dime dine dire dole dome done dose dote dune dupe fade fame fate file fine
+fire fume fuse gale game gate gave gone gore kale kite lade lake lame lane late
+lime line lobe lode lone lore lose lube lune lure lute made male mane mare mate
+mile mine mire mode mole mope more mule muse mute name nape nine node none nose
+note pale pane pare pile pine pipe pole pone pope pore pose pure rage rake rare
+rate ride rile rime ripe robe rode role rope rose rote rude rule ruse sale same
+sane site sole some sore tale tame tape tile time tire tone tore tote tube tune
+vale vane vase vile vine vote zone pupil robin rapid tulip metal petal pedal
+lemon salon melon sonar solar polar lunar total vital fatal motel model modal
+""".split())
+
+
 def new_name(rng: random.Random, taken: set[str]) -> str:
     """A fresh invented two-syllable name, so a pretrained model has no priors about it."""
     while True:
         syl = lambda: rng.choice(ONSETS) + rng.choice(VOWELS)
         name = (syl() + syl() + rng.choice(CODAS)).capitalize()
-        if name not in taken:
+        if name not in taken and name.lower() not in REAL_WORDS:
             return name
 
 
@@ -68,6 +92,7 @@ def generate_world(
     generations: int = 4,
     max_children: int = 3,
     marriage_rate: float = 0.8,
+    sideways_rate: float = 0.0,
 ) -> World:
     rng = random.Random(seed)
     world = World()
@@ -120,6 +145,19 @@ def generate_world(
             couples.append(couple)
         if not couples:
             break
+
+    # Each person independently gets each sideways link with probability
+    # sideways_rate, pointing at a random other person. No draws happen at
+    # rate 0, so family-only worlds are identical to before.
+    if sideways_rate > 0:
+        names = sorted(world.people)
+        for name in names:
+            for rel in SIDEWAYS:
+                if rng.random() < sideways_rate:
+                    other = rng.choice(names)
+                    while other == name:
+                        other = rng.choice(names)
+                    setattr(world.people[name], rel, other)
     return world
 
 
