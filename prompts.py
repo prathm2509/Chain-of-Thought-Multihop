@@ -22,7 +22,7 @@ INSTRUCTION = {
 }
 
 ANSWER_RE = re.compile(r"Answer:\s*\**\s*([A-Z][a-zA-Z]+)")
-LONE_NAME_RE = re.compile(r"^\**\s*([A-Z][a-zA-Z]+)\s*\**\.?$")
+LONE_NAME_RE = re.compile(r"^\**\s*([A-Z][a-zA-Z]+)\.?\s*\**\.?$")
 
 # Version 2 (2026-11-19, after the 1.5B run): the 1.5B sometimes replied in
 # direct mode with just the name ("Ronon") and no "Answer:" prefix. Version 1
